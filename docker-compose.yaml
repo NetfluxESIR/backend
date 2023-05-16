@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    networks:
+      - network
+    command:
+      - serve
+      - -H=0.0.0.0
+      - --dsn=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+      - -l=trace
+
+  db:
+    image: postgres:11.19-alpine3.17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - network
+
+networks:
+  network:
+    name: network

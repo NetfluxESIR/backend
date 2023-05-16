@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: Netflux ESIR
+  description: Netflux ESIR
+  version: 1.0.0
+servers:
+  - url: 'https'
+paths:
+  /api/v1/users/register:
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - users
+      summary: Register a user, only for admin
+      operationId: registerUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/User'
+                - $ref: '#/components/schemas/RobotAccount'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+                    description: The token of the user
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Conflict
+        '500':
+          description: Internal Server Error
+
+  /api/v1/users/login:
+    post:
+      tags:
+        - users
+      summary: Login a user
+      operationId: loginUser  
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/User'
+                - $ref: '#/components/schemas/RobotAccount'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - token
+                properties:
+                  token:
+                    type: string
+                    description: The token of the user
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          description: Internal Server Error
+      
+  /api/v1/videos:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+          - videos
+      summary: Get all videos
+      operationId: getVideos
+      parameters:
+        - name: limit
+          description: The number of items to return
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: offset
+          in: query
+          description: The number of items to skip before starting to collect the result set
+          required: false
+          schema:
+              type: integer
+              minimum: 0
+              default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Video'
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          description: Internal Server Error
+
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+          - videos
+      summary: Create a video
+      operationId: createVideo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Video'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+        '409':
+          description: Conflict
+        '500':
+          description: Internal Server Error
+
+  /api/v1/videos/{videoId}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+          - videos
+      summary: Get a video
+      operationId: getVideo
+      parameters:
+      - name: videoId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+                schema:
+                  $ref: '#/components/schemas/Video'
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+
+    put:
+      security:
+        - bearerAuth: [ ]
+      tags:
+          - videos
+      summary: Update a video
+      operationId: updateVideo
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/Video'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Video'
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+
+    delete:
+      security:
+        - bearerAuth: [ ]
+      tags:
+          - videos
+      summary: Delete a video
+      operationId: deleteVideo
+      parameters:
+      - name: videoId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+            description: No Content
+        '400':
+            description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+            description: Not Found
+        '500':
+          description: Internal Server Error
+  /api/v1/processing/{videoId}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - processing
+      summary: Get a processing
+      operationId: getProcessing
+      parameters:
+      - name: videoId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+                schema:
+                  $ref: '#/components/schemas/Processing'
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+
+  /api/v1/processing/{videoId}/status:
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - processing
+      summary: Update the status of a processing
+      operationId: updateProcessingStatus
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  description: The status of the processing
+                  enum:
+                    - PENDING
+                    - STARTED
+                    - ERROR
+                    - FINISHED
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+  /api/v1/processing/{videoId}/steps:
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - processing
+      summary: Update the step of a processing
+      operationId: updateProcessingStep
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - step
+              properties:
+                step:
+                  type: string
+                  description: The step of the processing
+                  enum:
+                    - NONE
+                    - DOWNSCALE
+                    - LANG_DETECTION
+                    - TRANSCRIPTION
+                    - ANIMAL_DETECTION
+                status:
+                  type: string
+                  description: The status of the step
+                  enum:
+                    - STARTED
+                    - ERROR
+                    - FINISHED
+                logs:
+                  type: string
+                  description: The logs of the step
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Access token is missing or invalid
+  schemas:
+    User:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: The email of the user
+        password:
+          type: string
+          description: The password of the user
+        role:
+          type: string
+          description: The role of the user
+          enum:
+            - ADMIN
+            - USER
+    RobotAccount:
+      type: object
+      required:
+          - name
+          - password
+      properties:
+        name:
+          type: string
+          description: The name of the robot account
+        password:
+          type: string
+          description: The password of the robot account
+        role:
+          type: string
+          description: The role of the robot account
+          enum:
+            - ROBOT
+
+    Video:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - videoUrl
+        - captionUrl
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier of the video
+        title:
+          type: string
+          description: The title of the video
+        description:
+          type: string
+          description: The description of the video
+        videoUrl:
+          type: string
+          description: The url of the video
+        captionUrl:
+          type: string
+          description: The url of the caption
+        processingId:
+          type: string
+          format: uuid
+          description: The unique identifier of the processing
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          description: The labels of the video
+        language:
+          type: string
+          description: The language of the video
+        metadata:
+          type: object
+          description: The metadata of the video
+          additionalProperties:
+            type: string
+    Processing:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The unique identifier of the processing
+        status:
+          type: string
+          description: The status of the processing
+          enum:
+            - PENDING
+            - STARTED
+            - ERROR
+            - FINISHED
+        videoId:
+          type: string
+          format: uuid
+          description: The unique identifier of the video
+        currentStep:
+          type: string
+          description: The step of the processing
+          enum:
+            - NONE
+            - DOWNSCALE
+            - LANG_DETECTION
+            - TRANSCRIPTION
+            - ANIMAL_DETECTION
+            - FINISHED
+        steps:
+          type: array
+          items:
+              $ref: '#/components/schemas/ProcessingStep'
+    ProcessingStep:
+      type: object
+      properties:
+        step:
+          type: string
+          description: The step of the processing
+          enum:
+            - NONE
+            - DOWNSCALE
+            - LANG_DETECTION
+            - TRANSCRIPTION
+            - ANIMAL_DETECTION
+            - FINISHED
+        status:
+          type: string
+          description: The status of the processing
+          enum:
+            - STARTED
+            - FINISHED
+        log:
+          type: string
+          description: The message of the processing
+
+security:
+  - bearerAuth: []

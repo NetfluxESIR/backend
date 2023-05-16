@@ -1,0 +1,3 @@
+[submodule "specs"]
+	path = pkg/api/specs
+	url = git@github.com:NetfluxESIR/API-documents.git
