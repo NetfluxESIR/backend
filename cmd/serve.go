@@ -22,6 +22,8 @@ var (
 				Logger: log.WithFields(log.Fields{
 					"service": "netflux",
 				}),
+				AdminAccount:  adminAccount,
+				AdminPassword: adminPassword,
 			}
 			if err := cfg.Validate(); err != nil {
 				return err
@@ -51,6 +53,10 @@ var (
 	dsn string
 	// loglevel is the log level.
 	loglevel string
+	// adminAccount is the admin account.
+	adminAccount string
+	// adminPassword is the admin password.
+	adminPassword string
 )
 
 func setLogLevel(loglevel string) {
@@ -82,4 +88,6 @@ func init() {
 	serveCmd.Flags().StringVarP(&host, "host", "H", "localhost", "Host to listen on.")
 	serveCmd.Flags().StringVarP(&dsn, "dsn", "d", "netflux:netflux@postgres:5432/netflux?sslmode=disable", "Data source name.")
 	serveCmd.Flags().StringVarP(&loglevel, "loglevel", "l", "info", "Log level.")
+	serveCmd.Flags().StringVarP(&adminAccount, "admin-account", "a", "admin", "Admin account.")
+	serveCmd.Flags().StringVarP(&adminPassword, "admin-password", "P", "admin", "Admin password.")
 }

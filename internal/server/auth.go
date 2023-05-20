@@ -2,19 +2,24 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
-func (s *Server) ValidateToken(ctx context.Context, token string) (bool, error) {
+func (s *Server) ValidateToken(ctx context.Context, token string) (string, error) {
+	// remove Bearer
+	if len(token) > 7 && token[:7] == "Bearer " {
+		token = token[7:]
+	}
 	getToken, err := s.db.GetToken(ctx, token)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	if getToken.Token == "" {
-		return false, nil
+		return "", fmt.Errorf("token not found")
 	}
 	if getToken.Expire && getToken.ExpirationDate.Before(time.Now()) {
-		return false, nil
+		return "", fmt.Errorf("token expired")
 	}
-	return true, nil
+	return getToken.AccountId, nil
 }

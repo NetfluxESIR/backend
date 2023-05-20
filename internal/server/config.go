@@ -21,6 +21,10 @@ type Config struct {
 	DSN string
 	// Logger is the logger entry.
 	Logger *log.Entry
+	// AdminAccount is the admin account.
+	AdminAccount string
+	// AdminPassword is the admin password.
+	AdminPassword string
 }
 
 // Validate validates the configuration.

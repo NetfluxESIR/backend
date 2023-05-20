@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"github.com/NetfluxESIR/backend/internal/models"
 	"github.com/NetfluxESIR/backend/internal/persistence"
 	"github.com/NetfluxESIR/backend/pkg/api"
+	"github.com/NetfluxESIR/backend/pkg/api/gen"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -19,18 +21,34 @@ func New(ctx context.Context, cfg *Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Server{
+	s := &Server{
 		cfg:    cfg,
 		logger: cfg.Logger,
 		db:     db,
-		api:    api.New(ctx, cfg.Host, cfg.Port, cfg.Logger.WithField("component", "api")),
-	}, nil
+		api:    nil,
+	}
+	password, err := hashAndSalt([]byte(cfg.AdminPassword))
+	if err != nil {
+		return nil, err
+	}
+	account := &models.Account{
+		Email:          cfg.AdminAccount,
+		HashedPassword: password,
+		Role:           string(gen.ADMIN),
+	}
+	s.db.RegisterUser(ctx, account)
+	s.api = api.New(ctx, cfg.Host, cfg.Port, s, s.logger.WithField("component", "api"))
+	return s, nil
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	return nil
+	return s.api.Run(ctx)
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	return nil
+	err := s.db.Close(ctx)
+	if err != nil {
+		return err
+	}
+	return s.api.Stop(ctx)
 }

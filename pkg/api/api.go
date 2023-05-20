@@ -30,7 +30,7 @@ type ServerInterface interface {
 	gen.ServerInterface
 }
 type Auth interface {
-	ValidateToken(ctx context.Context, token string) (bool, error)
+	ValidateToken(ctx context.Context, token string) (string, error)
 }
 
 func New(ctx context.Context, host string, port int, handler ServerInterface, logger *log.Entry) *API {
@@ -42,23 +42,21 @@ func New(ctx context.Context, host string, port int, handler ServerInterface, lo
 			Handler: handler,
 			HandlerMiddlewares: []gen.MiddlewareFunc{
 				func(c *gin.Context) {
-					if c.Request.URL.Path == "/api/v1/login" {
+					if c.Request.URL.Path == "/api/v1/users/login" {
 						c.Next()
+						return
 					}
 					token := c.Request.Header.Get("Authorization")
 					if token == "" {
 						c.AbortWithStatusJSON(401, gin.H{"error": "missing token"})
 						return
 					}
-					ok, err := handler.ValidateToken(c, token)
+					uuid, err := handler.ValidateToken(c, token)
 					if err != nil {
 						c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 						return
 					}
-					if !ok {
-						c.AbortWithStatusJSON(401, gin.H{"error": "invalid token"})
-						return
-					}
+					c.Set("userId", uuid)
 					c.Next()
 				},
 			},
@@ -69,20 +67,18 @@ func New(ctx context.Context, host string, port int, handler ServerInterface, lo
 	}
 }
 
-func (a *API) init(ctx context.Context) error {
-	return nil
-}
-
 func (a *API) Stop(ctx context.Context) error {
 	return nil
 }
 
 func (a *API) Run(ctx context.Context) error {
-	if err := a.init(ctx); err != nil {
-		return err
-	}
 	router := gin.Default()
-	gen.RegisterHandlers(router, a.server.Handler)
+	gen.RegisterHandlersWithOptions(router, a.server.Handler, gen.GinServerOptions{
+		Middlewares: a.server.HandlerMiddlewares,
+		ErrorHandler: func(c *gin.Context, err error, code int) {
+			a.server.ErrorHandler(c, err, code)
+		},
+	})
 	a.logger.Infof("API listening on %s:%d", a.host, a.port)
 	if err := router.Run(fmt.Sprintf("%s:%d", a.host, a.port)); err != nil {
 		return err

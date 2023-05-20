@@ -18,9 +18,7 @@ paths:
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/User'
-                - $ref: '#/components/schemas/RobotAccount'
+              $ref: '#/components/schemas/Account'
       responses:
         '201':
           description: Created
@@ -53,9 +51,7 @@ paths:
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/User'
-                - $ref: '#/components/schemas/RobotAccount'
+              $ref: '#/components/schemas/Account'
       responses:
         '200':
           description: OK
@@ -374,7 +370,7 @@ components:
     Unauthorized:
       description: Access token is missing or invalid
   schemas:
-    User:
+    Account:
       type: object
       required:
         - email
@@ -393,32 +389,12 @@ components:
           enum:
             - ADMIN
             - USER
-    RobotAccount:
-      type: object
-      required:
-          - name
-          - password
-      properties:
-        name:
-          type: string
-          description: The name of the robot account
-        password:
-          type: string
-          description: The password of the robot account
-        role:
-          type: string
-          description: The role of the robot account
-          enum:
             - ROBOT
-
     Video:
       type: object
       required:
-        - id
         - title
         - description
-        - videoUrl
-        - captionUrl
       properties:
         id:
           type: string

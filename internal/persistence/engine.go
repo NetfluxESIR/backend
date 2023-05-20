@@ -39,5 +39,5 @@ func (p *Engine) Close(ctx context.Context) error {
 }
 
 func (p *Engine) Migrate(ctx context.Context) error {
-	return p.db.AutoMigrate(models.Models())
+	return p.db.AutoMigrate(models.Models()...)
 }

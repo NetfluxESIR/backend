@@ -4,7 +4,7 @@ import "time"
 
 type Token struct {
 	Token          string    `json:"token" gorm:"primaryKey"`
-	UserID         string    `json:"user_id"`
+	AccountId      string    `json:"account_id"`
 	Expire         bool      `json:"expire"`
 	ExpirationDate time.Time `json:"expiration_date"`
 	CreatedAt      time.Time `json:"created_at"`

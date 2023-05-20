@@ -1,57 +1,213 @@
 package server
 
 import (
+	"github.com/NetfluxESIR/backend/internal/models"
 	"github.com/NetfluxESIR/backend/pkg/api/gen"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (s *Server) GetProcessing(c *gin.Context, videoId string) {
-	//TODO implement me
-	panic("implement me")
+	processing, err := s.db.GetProcessing(c, videoId)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, toProcessingAPIModel(processing))
 }
 
 func (s *Server) UpdateProcessingStatus(c *gin.Context, videoId openapi_types.UUID) {
-	//TODO implement me
-	panic("implement me")
+	var processingStatus gen.ProcessingStatus
+	if err := c.ShouldBind(&processingStatus); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	processing, err := s.db.GetProcessing(c, videoId.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	processing.Status = string(processingStatus)
+	if err := s.db.UpdateProcessing(c, processing); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, nil)
 }
 
 func (s *Server) UpdateProcessingStep(c *gin.Context, videoId openapi_types.UUID) {
-	//TODO implement me
-	panic("implement me")
+	var processingStep gen.ProcessingStep
+	if err := c.ShouldBindJSON(&processingStep); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	processing, err := s.db.GetProcessing(c, videoId.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	if processing.Steps == nil {
+		processing.Steps = []models.ProcessingStep{}
+	}
+	processing.Steps = append(processing.Steps, fromProcessingStepAPIModel(processingStep))
+	if err := s.db.UpdateProcessing(c, processing); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, nil)
 }
 
 func (s *Server) LoginUser(c *gin.Context) {
-	//TODO implement me
-	panic("implement me")
+	var user gen.Account
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	getUser, err := s.db.GetUser(c, string(user.Email))
+	if err != nil {
+		return
+	}
+	if getUser.Email == "" {
+		c.JSON(400, gin.H{"error": "Account not found"})
+		return
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(getUser.HashedPassword), []byte(user.Password))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	token, err := generateToken(getUser.ID.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err = s.db.UpdateToken(c, token)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"token": token.Token})
 }
 
 func (s *Server) RegisterUser(c *gin.Context) {
-	//TODO implement me
-	panic("implement me")
+	var user gen.Account
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	hashedPassword, err := hashAndSalt([]byte(user.Password))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	userDbModel := models.Account{
+		Email:          string(user.Email),
+		HashedPassword: hashedPassword,
+		Role:           string(*user.Role),
+	}
+	err = s.db.RegisterUser(c, &userDbModel)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	token, err := generateToken(userDbModel.ID.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err = s.db.UpdateToken(c, token)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(201, gin.H{"token": token.Token})
 }
 
 func (s *Server) GetVideos(c *gin.Context, params gen.GetVideosParams) {
-	//TODO implement me
-	panic("implement me")
+	list, err := s.db.GetVideoList(c, c.GetString("userId"), *params.Limit, *params.Offset)
+	if err != nil {
+		return
+	}
+	c.JSON(200, toVideosAPIModel(list))
 }
 
 func (s *Server) CreateVideo(c *gin.Context) {
-	//TODO implement me
-	panic("implement me")
+	var video gen.Video
+	if err := c.ShouldBindJSON(&video); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	userUUID, err := uuid.Parse(c.GetString("userId"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	videDbModel := fromVideoAPIModel(video)
+	videDbModel.UserID = userUUID
+	videDbModel.Processing = models.Processing{
+		Status:      string(gen.ProcessingStatusPENDING),
+		Steps:       []models.ProcessingStep{},
+		CurrentStep: string(gen.ProcessingStepStepNONE),
+	}
+	err = s.db.CreateVideo(c, &videDbModel)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(201, toVideoAPIModel(videDbModel))
 }
 
 func (s *Server) DeleteVideo(c *gin.Context, videoId openapi_types.UUID) {
-	//TODO implement me
-	panic("implement me")
+	userUUID, err := uuid.Parse(c.GetString("userId"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err = s.db.DeleteVideo(c, userUUID.String(), videoId.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(204, nil)
 }
 
 func (s *Server) GetVideo(c *gin.Context, videoId openapi_types.UUID) {
-	//TODO implement me
-	panic("implement me")
+	userUUID, err := uuid.Parse(c.GetString("userId"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	video, err := s.db.GetVideo(c, userUUID.String(), videoId.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, toVideoAPIModel(video))
 }
 
 func (s *Server) UpdateVideo(c *gin.Context, videoId openapi_types.UUID) {
-	//TODO implement me
-	panic("implement me")
+	var video gen.Video
+	if err := c.ShouldBindJSON(&video); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	userUUID, err := uuid.Parse(c.GetString("userId"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	videoInDb, err := s.db.GetVideo(c, userUUID.String(), videoId.String())
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	videoInDb.Merge(fromVideoAPIModel(video))
+	err = s.db.UpdateVideo(c, &videoInDb)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, toVideoAPIModel(videoInDb))
 }

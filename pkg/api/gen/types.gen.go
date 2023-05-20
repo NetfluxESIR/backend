@@ -4,13 +4,18 @@
 package gen
 
 import (
-	"encoding/json"
-
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 const (
 	BearerAuthScopes = "bearerAuth.Scopes"
+)
+
+// Defines values for AccountRole.
+const (
+	ADMIN AccountRole = "ADMIN"
+	ROBOT AccountRole = "ROBOT"
+	USER  AccountRole = "USER"
 )
 
 // Defines values for ProcessingCurrentStep.
@@ -47,17 +52,6 @@ const (
 	ProcessingStepStepTRANSCRIPTION   ProcessingStepStep = "TRANSCRIPTION"
 )
 
-// Defines values for RobotAccountRole.
-const (
-	ROBOT RobotAccountRole = "ROBOT"
-)
-
-// Defines values for UserRole.
-const (
-	ADMIN UserRole = "ADMIN"
-	USER  UserRole = "USER"
-)
-
 // Defines values for UpdateProcessingStatusJSONBodyStatus.
 const (
 	UpdateProcessingStatusJSONBodyStatusERROR    UpdateProcessingStatusJSONBodyStatus = "ERROR"
@@ -81,6 +75,21 @@ const (
 	NONE            UpdateProcessingStepJSONBodyStep = "NONE"
 	TRANSCRIPTION   UpdateProcessingStepJSONBodyStep = "TRANSCRIPTION"
 )
+
+// Account defines model for Account.
+type Account struct {
+	// Email The email of the user
+	Email openapi_types.Email `json:"email"`
+
+	// Password The password of the user
+	Password string `json:"password"`
+
+	// Role The role of the user
+	Role *AccountRole `json:"role,omitempty"`
+}
+
+// AccountRole The role of the user
+type AccountRole string
 
 // Processing defines model for Processing.
 type Processing struct {
@@ -122,46 +131,16 @@ type ProcessingStepStatus string
 // ProcessingStepStep The step of the processing
 type ProcessingStepStep string
 
-// RobotAccount defines model for RobotAccount.
-type RobotAccount struct {
-	// Name The name of the robot account
-	Name string `json:"name"`
-
-	// Password The password of the robot account
-	Password string `json:"password"`
-
-	// Role The role of the robot account
-	Role *RobotAccountRole `json:"role,omitempty"`
-}
-
-// RobotAccountRole The role of the robot account
-type RobotAccountRole string
-
-// User defines model for User.
-type User struct {
-	// Email The email of the user
-	Email openapi_types.Email `json:"email"`
-
-	// Password The password of the user
-	Password string `json:"password"`
-
-	// Role The role of the user
-	Role *UserRole `json:"role,omitempty"`
-}
-
-// UserRole The role of the user
-type UserRole string
-
 // Video defines model for Video.
 type Video struct {
 	// CaptionUrl The url of the caption
-	CaptionUrl string `json:"captionUrl"`
+	CaptionUrl *string `json:"captionUrl,omitempty"`
 
 	// Description The description of the video
 	Description string `json:"description"`
 
 	// Id The unique identifier of the video
-	Id openapi_types.UUID `json:"id"`
+	Id *openapi_types.UUID `json:"id,omitempty"`
 
 	// Labels The labels of the video
 	Labels *map[string]string `json:"labels,omitempty"`
@@ -179,7 +158,7 @@ type Video struct {
 	Title string `json:"title"`
 
 	// VideoUrl The url of the video
-	VideoUrl string `json:"videoUrl"`
+	VideoUrl *string `json:"videoUrl,omitempty"`
 }
 
 // UpdateProcessingStatusJSONBody defines parameters for UpdateProcessingStatus.
@@ -209,16 +188,6 @@ type UpdateProcessingStepJSONBodyStatus string
 // UpdateProcessingStepJSONBodyStep defines parameters for UpdateProcessingStep.
 type UpdateProcessingStepJSONBodyStep string
 
-// LoginUserJSONBody defines parameters for LoginUser.
-type LoginUserJSONBody struct {
-	union json.RawMessage
-}
-
-// RegisterUserJSONBody defines parameters for RegisterUser.
-type RegisterUserJSONBody struct {
-	union json.RawMessage
-}
-
 // GetVideosParams defines parameters for GetVideos.
 type GetVideosParams struct {
 	// Limit The number of items to return
@@ -235,10 +204,10 @@ type UpdateProcessingStatusJSONRequestBody UpdateProcessingStatusJSONBody
 type UpdateProcessingStepJSONRequestBody UpdateProcessingStepJSONBody
 
 // LoginUserJSONRequestBody defines body for LoginUser for application/json ContentType.
-type LoginUserJSONRequestBody LoginUserJSONBody
+type LoginUserJSONRequestBody = Account
 
 // RegisterUserJSONRequestBody defines body for RegisterUser for application/json ContentType.
-type RegisterUserJSONRequestBody RegisterUserJSONBody
+type RegisterUserJSONRequestBody = Account
 
 // CreateVideoJSONRequestBody defines body for CreateVideo for application/json ContentType.
 type CreateVideoJSONRequestBody = Video

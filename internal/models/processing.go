@@ -13,6 +13,7 @@ type Processing struct {
 type ProcessingStep struct {
 	BaseModel
 	ProcessingID uuid.UUID `json:"processingId"`
+	Log          string    `json:"log"`
 	Status       string    `json:"status"`
 	Step         string    `json:"step"`
 }
