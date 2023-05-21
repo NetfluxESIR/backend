@@ -3,19 +3,36 @@ package server
 import (
 	"github.com/NetfluxESIR/backend/internal/models"
 	"github.com/NetfluxESIR/backend/pkg/api/gen"
+	"github.com/google/uuid"
 	"gorm.io/datatypes"
 )
 
-func fromVideoAPIModel(video gen.Video) models.Video {
+func fromVideoAPIModel(video gen.Video) (models.Video, error) {
 	labels := datatypes.JSONMap{}
-	err := labels.Scan(video.Labels)
-	if err != nil {
-		return models.Video{}
+	if video.Labels != nil {
+		err := labels.Scan(video.Labels)
+		if err != nil {
+			return models.Video{}, err
+		}
 	}
 	metadata := datatypes.JSONMap{}
-	err = metadata.Scan(video.Metadata)
-	if err != nil {
-		return models.Video{}
+	if video.Metadata != nil {
+		err := metadata.Scan(video.Metadata)
+		if err != nil {
+			return models.Video{}, err
+		}
+	}
+	if video.CaptionUrl == nil {
+		video.CaptionUrl = new(string)
+	}
+	if video.Id == nil {
+		video.Id = &uuid.Nil
+	}
+	if video.Language == nil {
+		video.Language = new(string)
+	}
+	if video.VideoUrl == nil {
+		video.VideoUrl = new(string)
 	}
 	return models.Video{
 		CaptionUrl:  *video.CaptionUrl,
@@ -28,7 +45,7 @@ func fromVideoAPIModel(video gen.Video) models.Video {
 		Metadata: metadata,
 		Title:    video.Title,
 		VideoUrl: *video.VideoUrl,
-	}
+	}, nil
 }
 
 func toVideoAPIModel(video models.Video) gen.Video {

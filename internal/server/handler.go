@@ -3,10 +3,13 @@ package server
 import (
 	"github.com/NetfluxESIR/backend/internal/models"
 	"github.com/NetfluxESIR/backend/pkg/api/gen"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 func (s *Server) GetProcessing(c *gin.Context, videoId string) {
@@ -126,6 +129,14 @@ func (s *Server) RegisterUser(c *gin.Context) {
 }
 
 func (s *Server) GetVideos(c *gin.Context, params gen.GetVideosParams) {
+	if params.Limit == nil {
+		limit := 10
+		params.Limit = &limit
+	}
+	if params.Offset == nil {
+		offset := 0
+		params.Offset = &offset
+	}
 	list, err := s.db.GetVideoList(c, c.GetString("userId"), *params.Limit, *params.Offset)
 	if err != nil {
 		return
@@ -144,19 +155,25 @@ func (s *Server) CreateVideo(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	videDbModel := fromVideoAPIModel(video)
-	videDbModel.UserID = userUUID
-	videDbModel.Processing = models.Processing{
-		Status:      string(gen.ProcessingStatusPENDING),
-		Steps:       []models.ProcessingStep{},
-		CurrentStep: string(gen.ProcessingStepStepNONE),
-	}
-	err = s.db.CreateVideo(c, &videDbModel)
+	s.logger.Info("Creating video with title: " + video.Title)
+	videoDbModel, err := fromVideoAPIModel(video)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(201, toVideoAPIModel(videDbModel))
+	s.logger.Info("Video model: " + videoDbModel.Title)
+	videoDbModel.UserID = userUUID
+	videoDbModel.Processing = models.Processing{
+		Status:      string(gen.ProcessingStatusPENDING),
+		Steps:       []models.ProcessingStep{},
+		CurrentStep: string(gen.ProcessingStepStepNONE),
+	}
+	err = s.db.CreateVideo(c, &videoDbModel)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(201, toVideoAPIModel(videoDbModel))
 }
 
 func (s *Server) DeleteVideo(c *gin.Context, videoId openapi_types.UUID) {
@@ -203,11 +220,30 @@ func (s *Server) UpdateVideo(c *gin.Context, videoId openapi_types.UUID) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	videoInDb.Merge(fromVideoAPIModel(video))
+	videoReceived, err := fromVideoAPIModel(video)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	videoInDb.Merge(videoReceived)
 	err = s.db.UpdateVideo(c, &videoInDb)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(200, toVideoAPIModel(videoInDb))
+}
+
+func (s *Server) GetPresignedUrl(c *gin.Context, key string) {
+	svc := s3.New(s.s3)
+	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
+		Bucket: aws.String(s.cfg.S3Bucket),
+		Key:    aws.String(key),
+	})
+	urlStr, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"url": urlStr})
 }

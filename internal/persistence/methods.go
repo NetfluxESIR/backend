@@ -30,7 +30,7 @@ func (p *Engine) GetVideo(ctx context.Context, userId, videoId string) (models.V
 	var v models.Video
 	tx := p.db.WithContext(ctx).
 		Preload("Processing").
-		Where("video_id = ?", videoId).
+		Where("id = ?", videoId).
 		Where("user_id = ?", userId).
 		First(&v)
 	return v, tx.Error
@@ -47,7 +47,7 @@ func (p *Engine) UpdateVideo(ctx context.Context, video *models.Video) error {
 }
 
 func (p *Engine) DeleteVideo(ctx context.Context, userId, videoId string) error {
-	tx := p.db.WithContext(ctx).Where("video_id = ?", videoId).Where("user_id = ?", userId).Delete(&models.Video{})
+	tx := p.db.WithContext(ctx).Where("id = ?", videoId).Where("user_id = ?", userId).Delete(&models.Video{})
 	return tx.Error
 }
 

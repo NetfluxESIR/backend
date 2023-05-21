@@ -24,6 +24,10 @@ var (
 				}),
 				AdminAccount:  adminAccount,
 				AdminPassword: adminPassword,
+				S3Bucket:      s3Bucket,
+				S3Region:      s3Region,
+				S3AccessKey:   os.Getenv("AWS_ACCESS_KEY_ID"),
+				S3SecretKey:   os.Getenv("AWS_SECRET_ACCESS_KEY"),
 			}
 			if err := cfg.Validate(); err != nil {
 				return err
@@ -57,6 +61,10 @@ var (
 	adminAccount string
 	// adminPassword is the admin password.
 	adminPassword string
+	// s3Bucket is the S3 bucket name.
+	s3Bucket string
+	// s3Region is the S3 region.
+	s3Region string
 )
 
 func setLogLevel(loglevel string) {
@@ -90,4 +98,6 @@ func init() {
 	serveCmd.Flags().StringVarP(&loglevel, "loglevel", "l", "info", "Log level.")
 	serveCmd.Flags().StringVarP(&adminAccount, "admin-account", "a", "admin", "Admin account.")
 	serveCmd.Flags().StringVarP(&adminPassword, "admin-password", "P", "admin", "Admin password.")
+	serveCmd.Flags().StringVarP(&s3Bucket, "s3-bucket", "b", "", "S3 bucket name.")
+	serveCmd.Flags().StringVarP(&s3Region, "s3-region", "r", "", "S3 region.")
 }

@@ -6,6 +6,41 @@ info:
 servers:
   - url: 'https'
 paths:
+  /api/v1/presignedurl/{key}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - presignedurl
+      summary: Get a presigned url
+      operationId: getPresignedUrl
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - url
+                properties:
+                  url:
+                    type: string
+                    description: The presigned url
+        '400':
+          description: Bad Request
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
   /api/v1/users/register:
     post:
       security:

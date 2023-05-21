@@ -6,6 +6,9 @@ import (
 	"github.com/NetfluxESIR/backend/internal/persistence"
 	"github.com/NetfluxESIR/backend/pkg/api"
 	"github.com/NetfluxESIR/backend/pkg/api/gen"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -14,6 +17,7 @@ type Server struct {
 	logger *log.Entry
 	db     *persistence.Engine
 	api    *api.API
+	s3     *session.Session
 }
 
 func New(ctx context.Context, cfg *Config) (*Server, error) {
@@ -37,6 +41,13 @@ func New(ctx context.Context, cfg *Config) (*Server, error) {
 		Role:           string(gen.ADMIN),
 	}
 	s.db.RegisterUser(ctx, account)
+	s.s3, err = session.NewSession(&aws.Config{
+		Credentials: credentials.NewStaticCredentials(cfg.S3AccessKey, cfg.S3SecretKey, ""),
+		Region:      aws.String(cfg.S3Region),
+	})
+	if err != nil {
+		return nil, err
+	}
 	s.api = api.New(ctx, cfg.Host, cfg.Port, s, s.logger.WithField("component", "api"))
 	return s, nil
 }

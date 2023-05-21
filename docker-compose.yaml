@@ -1,22 +1,27 @@
 version: '3.8'
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    networks:
-      - network
-    command:
-      - serve
-      - -H=0.0.0.0
-      - --dsn=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
-      - -l=trace
-      - -a=test
-      - -P=test
-    depends_on:
-      - db
+   build:
+     context: .
+     dockerfile: Dockerfile
+   ports:
+     - "8080:8080"
+   networks:
+     - network
+   command:
+     - serve
+     - -H=0.0.0.0
+     - --dsn=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+     - -l=trace
+     - -a=test@test.com
+     - -P=test
+     - -b=mon-superbucket
+     - -r=eu-west-3
+   depends_on:
+     - db
+   environment:
+     - AWS_ACCESS_KEY_ID=""
+     - AWS_SECRET_ACCESS_KEY=""
   db:
     image: postgres:alpine3.18
     environment:

@@ -25,6 +25,15 @@ type Config struct {
 	AdminAccount string
 	// AdminPassword is the admin password.
 	AdminPassword string
+
+	// S3Bucket is the S3 bucket name.
+	S3Bucket string
+	// S3Region is the S3 region.
+	S3Region string
+	// S3AccessKey is the S3 access key.
+	S3AccessKey string
+	// S3SecretKey is the S3 secret key.
+	S3SecretKey string
 }
 
 // Validate validates the configuration.

@@ -90,6 +90,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetPresignedUrl request
+	GetPresignedUrl(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetProcessing request
 	GetProcessing(ctx context.Context, videoId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -131,6 +134,18 @@ type ClientInterface interface {
 	UpdateVideoWithBody(ctx context.Context, videoId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UpdateVideo(ctx context.Context, videoId openapi_types.UUID, body UpdateVideoJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) GetPresignedUrl(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPresignedUrlRequest(c.Server, key)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) GetProcessing(ctx context.Context, videoId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -323,6 +338,40 @@ func (c *Client) UpdateVideo(ctx context.Context, videoId openapi_types.UUID, bo
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetPresignedUrlRequest generates requests for GetPresignedUrl
+func NewGetPresignedUrlRequest(server string, key string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "key", runtime.ParamLocationPath, key)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/presignedurl/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetProcessingRequest generates requests for GetProcessing
@@ -794,6 +843,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetPresignedUrl request
+	GetPresignedUrlWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetPresignedUrlResponse, error)
+
 	// GetProcessing request
 	GetProcessingWithResponse(ctx context.Context, videoId string, reqEditors ...RequestEditorFn) (*GetProcessingResponse, error)
 
@@ -835,6 +887,31 @@ type ClientWithResponsesInterface interface {
 	UpdateVideoWithBodyWithResponse(ctx context.Context, videoId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateVideoResponse, error)
 
 	UpdateVideoWithResponse(ctx context.Context, videoId openapi_types.UUID, body UpdateVideoJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateVideoResponse, error)
+}
+
+type GetPresignedUrlResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		// Url The presigned url
+		Url string `json:"url"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPresignedUrlResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPresignedUrlResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetProcessingResponse struct {
@@ -1060,6 +1137,15 @@ func (r UpdateVideoResponse) StatusCode() int {
 	return 0
 }
 
+// GetPresignedUrlWithResponse request returning *GetPresignedUrlResponse
+func (c *ClientWithResponses) GetPresignedUrlWithResponse(ctx context.Context, key string, reqEditors ...RequestEditorFn) (*GetPresignedUrlResponse, error) {
+	rsp, err := c.GetPresignedUrl(ctx, key, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPresignedUrlResponse(rsp)
+}
+
 // GetProcessingWithResponse request returning *GetProcessingResponse
 func (c *ClientWithResponses) GetProcessingWithResponse(ctx context.Context, videoId string, reqEditors ...RequestEditorFn) (*GetProcessingResponse, error) {
 	rsp, err := c.GetProcessing(ctx, videoId, reqEditors...)
@@ -1196,6 +1282,35 @@ func (c *ClientWithResponses) UpdateVideoWithResponse(ctx context.Context, video
 		return nil, err
 	}
 	return ParseUpdateVideoResponse(rsp)
+}
+
+// ParseGetPresignedUrlResponse parses an HTTP response from a GetPresignedUrlWithResponse call
+func ParseGetPresignedUrlResponse(rsp *http.Response) (*GetPresignedUrlResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPresignedUrlResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			// Url The presigned url
+			Url string `json:"url"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetProcessingResponse parses an HTTP response from a GetProcessingWithResponse call

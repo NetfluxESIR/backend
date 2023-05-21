@@ -14,6 +14,9 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get a presigned url
+	// (GET /api/v1/presignedurl/{key})
+	GetPresignedUrl(c *gin.Context, key string)
 	// Get a processing
 	// (GET /api/v1/processing/{videoId})
 	GetProcessing(c *gin.Context, videoId string)
@@ -54,6 +57,29 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// GetPresignedUrl operation middleware
+func (siw *ServerInterfaceWrapper) GetPresignedUrl(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "key" -------------
+	var key string
+
+	err = runtime.BindStyledParameter("simple", false, "key", c.Param("key"), &key)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter key: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{""})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+	}
+
+	siw.Handler.GetPresignedUrl(c, key)
+}
 
 // GetProcessing operation middleware
 func (siw *ServerInterfaceWrapper) GetProcessing(c *gin.Context) {
@@ -290,6 +316,8 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 		HandlerMiddlewares: options.Middlewares,
 		ErrorHandler:       errorHandler,
 	}
+
+	router.GET(options.BaseURL+"/api/v1/presignedurl/:key", wrapper.GetPresignedUrl)
 
 	router.GET(options.BaseURL+"/api/v1/processing/:videoId", wrapper.GetProcessing)
 

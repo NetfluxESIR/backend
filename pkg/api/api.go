@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/NetfluxESIR/backend/pkg/api/gen"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -73,6 +74,10 @@ func (a *API) Stop(ctx context.Context) error {
 
 func (a *API) Run(ctx context.Context) error {
 	router := gin.Default()
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowHeaders = append(config.AllowHeaders, "Authorization", "authorization", "Content-Type", "content-type", "*")
+	router.Use(cors.New(config))
 	gen.RegisterHandlersWithOptions(router, a.server.Handler, gen.GinServerOptions{
 		Middlewares: a.server.HandlerMiddlewares,
 		ErrorHandler: func(c *gin.Context, err error, code int) {
