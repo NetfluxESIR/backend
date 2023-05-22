@@ -19,6 +19,8 @@ func hashAndSalt(pwd []byte) (string, error) {
 
 func generateToken(userId string) (models.Token, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = userId
 	stringToken, err := token.SignedString(sampleSecretKey)
 	if err != nil {
 		return models.Token{}, err
