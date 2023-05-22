@@ -516,6 +516,7 @@ components:
           enum:
             - STARTED
             - FINISHED
+            - ERROR
         log:
           type: string
           description: The message of the processing

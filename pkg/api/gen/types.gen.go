@@ -38,6 +38,7 @@ const (
 
 // Defines values for ProcessingStepStatus.
 const (
+	ProcessingStepStatusERROR    ProcessingStepStatus = "ERROR"
 	ProcessingStepStatusFINISHED ProcessingStepStatus = "FINISHED"
 	ProcessingStepStatusSTARTED  ProcessingStepStatus = "STARTED"
 )

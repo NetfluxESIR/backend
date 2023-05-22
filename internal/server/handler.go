@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/NetfluxESIR/backend/internal/models"
+	"github.com/NetfluxESIR/backend/pkg/api"
 	"github.com/NetfluxESIR/backend/pkg/api/gen"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -27,6 +28,11 @@ func (s *Server) UpdateProcessingStatus(c *gin.Context, videoId openapi_types.UU
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+	err := api.ValidateStatus(processingStatus)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
 	processing, err := s.db.GetProcessing(c, videoId.String())
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
@@ -43,6 +49,11 @@ func (s *Server) UpdateProcessingStatus(c *gin.Context, videoId openapi_types.UU
 func (s *Server) UpdateProcessingStep(c *gin.Context, videoId openapi_types.UUID) {
 	var processingStep gen.ProcessingStep
 	if err := c.ShouldBindJSON(&processingStep); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err := api.ValidateStep(processingStep)
+	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -65,6 +76,11 @@ func (s *Server) UpdateProcessingStep(c *gin.Context, videoId openapi_types.UUID
 func (s *Server) LoginUser(c *gin.Context) {
 	var user gen.Account
 	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err := api.ValidateAccount(user)
+	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -97,6 +113,11 @@ func (s *Server) LoginUser(c *gin.Context) {
 func (s *Server) RegisterUser(c *gin.Context) {
 	var user gen.Account
 	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err := api.ValidateAccount(user)
+	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -147,6 +168,11 @@ func (s *Server) GetVideos(c *gin.Context, params gen.GetVideosParams) {
 func (s *Server) CreateVideo(c *gin.Context) {
 	var video gen.Video
 	if err := c.ShouldBindJSON(&video); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	err := api.ValidateVideo(video)
+	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
