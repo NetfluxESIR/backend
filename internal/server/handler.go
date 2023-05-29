@@ -23,12 +23,13 @@ func (s *Server) GetProcessing(c *gin.Context, videoId string) {
 }
 
 func (s *Server) UpdateProcessingStatus(c *gin.Context, videoId openapi_types.UUID) {
-	var processingStatus gen.ProcessingStatus
-	if err := c.ShouldBind(&processingStatus); err != nil {
+	var processingStatusBody gen.UpdateProcessingStatusJSONBody
+	if err := c.ShouldBind(&processingStatusBody); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	err := api.ValidateStatus(processingStatus)
+	processingStatus := processingStatusBody.Status
+	err := api.ValidateStatus(gen.ProcessingStatus(processingStatus))
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
