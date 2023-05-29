@@ -65,6 +65,18 @@ func (s *Server) UpdateProcessingStep(c *gin.Context, videoId openapi_types.UUID
 	if processing.Steps == nil {
 		processing.Steps = []models.ProcessingStep{}
 	}
+	if *processingStep.Step == gen.ProcessingStepStepLANGDETECTION && *processingStep.Status == gen.ProcessingStepStatusFINISHED {
+		video, err := s.db.GetVideo(c, c.GetString("userId"), videoId.String())
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		video.Language = *processingStep.Log
+		if err := s.db.UpdateVideo(c, &video); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+	}
 	processing.Steps = append(processing.Steps, fromProcessingStepAPIModel(processingStep))
 	if err := s.db.UpdateProcessing(c, processing); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
