@@ -173,8 +173,8 @@ type UpdateProcessingStatusJSONBodyStatus string
 
 // UpdateProcessingStepJSONBody defines parameters for UpdateProcessingStep.
 type UpdateProcessingStepJSONBody struct {
-	// Logs The logs of the step
-	Logs *string `json:"logs,omitempty"`
+	// Log The logs of the step
+	Log *string `json:"log,omitempty"`
 
 	// Status The status of the step
 	Status *UpdateProcessingStepJSONBodyStatus `json:"status,omitempty"`
