@@ -78,6 +78,9 @@ func (s *Server) UpdateProcessingStep(c *gin.Context, videoId openapi_types.UUID
 			return
 		}
 	}
+	if *processingStep.Status == gen.ProcessingStepStatusSTARTED {
+		processing.CurrentStep = string(*processingStep.Step)
+	}
 	processing.Steps = append(processing.Steps, fromProcessingStepAPIModel(processingStep))
 	if err := s.db.UpdateProcessing(c, processing); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
