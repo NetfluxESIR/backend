@@ -13,6 +13,8 @@ This repository contains the backend of the Netflux ESIR project used to store m
 #### Build the server
 
 ```bash
+git clone https://https://github.com/NetfluxESIR/backend.git
+cd backend
 make build
 ```
 
