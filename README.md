@@ -8,6 +8,8 @@ This repository contains the backend of the Netflux ESIR project used to store m
 
 - [git](https://git-scm.com/downloads)
 - [Go](https://golang.org/doc/install)
+- [An AWS S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/creating-bucket.html)
+- [A PostgreSQL database](https://www.postgresql.org/download/)
 
 ### Run from source
 
