@@ -6,6 +6,7 @@ This repository contains the backend of the Netflux ESIR project used to store m
 
 ### Requirements
 
+- [git](https://git-scm.com/downloads)
 - [Go](https://golang.org/doc/install)
 
 ### Run from source
