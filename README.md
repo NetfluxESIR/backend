@@ -50,7 +50,7 @@ Flags:
 You can find a docker image of the backend [here](https://github.com/NetfluxESIR/backend/pkgs/container/backend).
 
 ```bash
-docker run  ghcr.io/netfluxesir/backend:latest serve --s3-bucket <your-bucket-name> --s3-region <your-bucket-region>
+docker run -p 8080:8080 ghcr.io/netfluxesir/backend:latest serve --s3-bucket <your-bucket-name> --s3-region <your-bucket-region>
 ```
 
 > Note: you can also use the [docker-compose.yml](./docker-compose.yaml) file to run the backend and the database locally.
